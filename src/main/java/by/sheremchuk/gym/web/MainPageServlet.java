@@ -22,16 +22,12 @@ import java.util.Optional;
 
 public class MainPageServlet extends HttpServlet {
 
-    private final String COMMAND_PARAMETER = "command";
-
-    List<Client> clientList;
-
+    private final static String COMMAND_PARAMETER = "command";
+    private List<Client> clientList;
     @Override
     public void init() throws ServletException{
         super.init();
-
         ClientService clientService = new ClientService();
-
         try {
             clientList = clientService.findAllClients().orElse(new ArrayList<>());
         } catch (ServiceException e) {
@@ -41,24 +37,22 @@ public class MainPageServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        response.setCharacterEncoding("UTF-8");
         String command = request.getParameter(COMMAND_PARAMETER);
-
         if (command == null) {
             command = "";
         }
-
         Command action = CommandFactory.create(command);
         String page = "/WEB-INF/pages/mainPage.jsp";
+        request.setAttribute("message",request.getParameter("surnameOrCardNumber"));
 
         try {
-            if (!action.execute(request, response)) {
-                throw new ServiceException("command fail");
-            }
+            action.execute(request, response);
         } catch (ServiceException e) {
+            e.printStackTrace();
             page = "/WEB-INF/pages/errorPage.jsp";
         }
         request.setAttribute("clients", clientList);
-
         dispatch(request, response, page);
     }
 
